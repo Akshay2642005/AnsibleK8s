@@ -1,4 +1,4 @@
 /*
 !.gitignore
 !sample/
-k3s-server/
+k8s-server/
