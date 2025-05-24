@@ -1,6 +1,5 @@
 # KubeCluster: Automated High Availability Kubernetes Deployment
 
-![KubeCluster Automated Deployment](https://img.youtube.com/vi/example-video-id/0.jpg)
 
 This project provides an Ansible-based solution to deploy a fully automated HA Kubernetes cluster with integrated load balancing using `kube-vip` and `MetalLB`.
 
@@ -140,27 +139,6 @@ kubectl expose deployment nginx --port=80 --type=LoadBalancer
 | **HighAvailability** | `kube_vip_interface` | string | ❌ | No | Network interface for kube-vip (auto-detected if not specified) |
 | **Storage** | `enable_local_storage` | bool | `false` | No | Enable local path provisioner |
 | **System** | `timezone` | string | `UTC` | No | Timezone for all nodes |
-
-## 🔍 Troubleshooting
-
-Common issues and solutions:
-
-1. **Nodes Not Joining**: Check firewall settings and ensure ports 6443, 10250 are open
-2. **Network Plugin Issues**: Verify CNI configuration and pod CIDR settings
-3. **LoadBalancer Not Working**: Ensure MetalLB IP range is within your network subnet
-4. **Certificate Errors**: Check system time sync across all nodes
-
-## 🧪 Testing
-
-This project includes molecule tests for validation. Run them with:
-
-```bash
-# Install dependencies
-pip install molecule molecule-plugins[docker]
-
-# Run tests
-molecule test
-```
 
 ## 🤝 Contributing
 
