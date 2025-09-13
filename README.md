@@ -1,4 +1,4 @@
-# KubeCluster: Automated High Availability Kubernetes Deployment
+# AnsibleK8s: Automated High Availability Kubernetes Deployment
 
 
 This project provides an Ansible-based solution to deploy a fully automated HA Kubernetes cluster with integrated load balancing using `kube-vip` and `MetalLB`.
@@ -161,4 +161,5 @@ Special thanks to:
 - Contributors to kube-vip and MetalLB projects
 - The Ansible community for automation tools and patterns
 - @Techno-Tim for sharing the original repo and inspiration
+
 
