@@ -34,8 +34,8 @@ Compatible with these processor architectures:
 1. Clone the repository and create your cluster configuration:
 
 ```bash
-git clone https://github.com/Akshay2642005/kubecluster.git
-cd kubecluster
+git clone https://github.com/Akshay2642005/AnsibleK8s.git
+cd AnsibleK8s
 cp -R inventory/sample inventory/my-cluster
 ```
 
@@ -161,3 +161,4 @@ Special thanks to:
 - Contributors to kube-vip and MetalLB projects
 - The Ansible community for automation tools and patterns
 - @Techno-Tim for sharing the original repo and inspiration
+
