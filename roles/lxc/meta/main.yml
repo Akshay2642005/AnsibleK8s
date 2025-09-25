@@ -1,8 +1,0 @@
----
-argument_specs:
-  main:
-    short_description: Configure LXC
-    options:
-      custom_reboot_command:
-        default: ~
-        description: Command to run on reboot
