@@ -55,36 +55,77 @@ verify_pair() {
     main|master) fail "on '$branch' — develop-tdd hard gate: run kickoff-branch first" ;;
   esac
   git -C "$root" diff --quiet 2>/dev/null || fail "working tree dirty — commit or stash first"
-  [ "$(git -C "$root" rev-list --count HEAD)" -ge 2 ] \
-    || fail "need at least 2 commits to judge a RED/GREEN pair"
 
-  local tmp head_rc=0 prev_rc=0
+  # Locate the most recent RED commit (subject starts with "test(") and the
+  # commit that answered it (its child = GREEN). This keeps the gate re-runnable
+  # after later chore/refactor commits land on top of the pair.
+  local red_rev="" red_subj="" green_rev="" green_subj=""
+  local hash subj
+  while read -r hash subj; do
+    case "$subj" in
+      test\(*) red_rev="$hash"; red_subj="$subj"; break ;;
+    esac
+  done < <(git -C "$root" log --format='%H %s')
+  [ -n "$red_rev" ] || fail "no test(<scope>): commit found on this branch"
+
+  green_rev="$(git -C "$root" rev-list --ancestry-path --reverse "${red_rev}..HEAD" | head -1)"
+  if [ -n "$green_rev" ]; then
+    green_subj="$(git -C "$root" log -1 --format='%s' "$green_rev")"
+  fi
+
+  local tmp red_rc=0 green_rc=0 base_rc=0 head_rc=0
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/tdd-red-check.XXXXXX")"
   trap "rm -rf '$tmp'" EXIT
 
   echo "== verify-tdd-red-commit: branch '$branch' =="
-  info "HEAD   $(git -C "$root" log -1 --format='%h %s')"
-  info "HEAD~1 $(git -C "$root" log -1 --format='%h %s' HEAD~1)"
+  info "RED   ${red_rev:0:7} $red_subj"
+  if [ -n "$green_rev" ]; then
+    info "GREEN ${green_rev:0:7} $green_subj"
+    info "HEAD  $(git -C "$root" log -1 --format='%h %s')"
+  else
+    info "GREEN (none yet — RED is at HEAD, awaiting implementation)"
+  fi
 
-  info "running [$TEST_CMD] at HEAD..."
-  run_suite "$root" WORKTREE "$tmp/head.log" || head_rc=$?
-  info "running [$TEST_CMD] at HEAD~1 (isolated worktree)..."
-  run_suite "$root" HEAD~1 "$tmp/prev.log" || prev_rc=$?
+  info "running [$TEST_CMD] at RED..."
+  run_suite "$root" "$red_rev" "$tmp/red.log" || red_rc=$?
 
-  info "HEAD   exit=$head_rc | HEAD~1 exit=$prev_rc"
-
-  if [ "$head_rc" -eq 0 ] && [ "$prev_rc" -ne 0 ]; then
-    echo "PASS: RED confirmed at HEAD~1 (exit $prev_rc); GREEN confirmed at HEAD (pair valid)"
+  if [ -z "$green_rev" ]; then
+    # Awaiting GREEN: RED must fail here; the pre-RED baseline must pass.
+    local base_rc=0
+    run_suite "$root" "${red_rev}^" "$tmp/base.log" || base_rc=$?
+    info "RED exit=$red_rc | baseline(${red_rev:0:7}^) exit=$base_rc"
+    if [ "$red_rc" -eq 0 ]; then
+      fail "RED gate violated: the test-only commit PASSES in isolation (exit=0)"
+    fi
+    if [ "$base_rc" -ne 0 ]; then
+      fail "baseline before RED already fails (exit=$base_rc) — nothing to compare against"
+    fi
+    echo "PASS: test-only commit fails in isolation (RED confirmed) — commit the GREEN implementation next"
     return 0
   fi
-  if [ "$head_rc" -ne 0 ] && [ "$prev_rc" -eq 0 ]; then
-    echo "PASS: test-only commit at HEAD fails in isolation (RED) — commit the GREEN implementation next"
-    return 0
+
+  # Pair present: RED must fail, GREEN must pass, and HEAD must still pass.
+  info "running [$TEST_CMD] at GREEN..."
+  run_suite "$root" "$green_rev" "$tmp/green.log" || green_rc=$?
+  if [ "$green_rev" != "$(git -C "$root" rev-parse HEAD)" ]; then
+    info "running [$TEST_CMD] at HEAD..."
+    run_suite "$root" WORKTREE "$tmp/head.log" || head_rc=$?
+  else
+    head_rc=$green_rc
   fi
-  if [ "$head_rc" -eq 0 ] && [ "$prev_rc" -eq 0 ]; then
-    fail "RED gate violated: the test-only commit PASSES in isolation (HEAD~1 exit=0)"
+  info "RED exit=$red_rc | GREEN exit=$green_rc | HEAD exit=$head_rc"
+
+  if [ "$red_rc" -eq 0 ]; then
+    fail "RED gate violated: the test-only commit PASSES in isolation (RED exit=0)"
   fi
-  fail "HEAD (GREEN commit) still fails its own suite (exit $head_rc)"
+  if [ "$green_rc" -ne 0 ]; then
+    fail "GREEN commit fails its own suite (exit=$green_rc)"
+  fi
+  if [ "$head_rc" -ne 0 ]; then
+    fail "HEAD is red (exit=$head_rc) — current tree does not pass"
+  fi
+  echo "PASS: RED confirmed at ${red_rev:0:7} (exit $red_rc); GREEN at ${green_rev:0:7}; HEAD green (pair valid)"
+  return 0
 }
 
 # --- self-test: prove all four verdicts on synthetic repos -------------------
