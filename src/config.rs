@@ -106,6 +106,16 @@ network:
 ";
 
     #[test]
+    fn rejects_unknown_fields() {
+        let yaml = format!("{MINIMAL}bogus_field: 1\n");
+        let err = load_from_str(&yaml).expect_err("unknown top-level key must be rejected");
+        assert!(
+            err.to_string().contains("bogus_field"),
+            "error must name the offending key, got: {err}"
+        );
+    }
+
+    #[test]
     fn loads_minimal_cluster_yaml() {
         let cfg = load_from_str(MINIMAL).expect("minimal config must load");
         assert_eq!(cfg.name, "test-cluster");
