@@ -33,7 +33,7 @@ tasks:
       categories:
         - "unit"
         - "Foundation"
-    status: failing
+    status: passing
   - id: e01s01t4
     description: Ship an example cluster.yaml and prove serialize/deserialize round-trips losslessly.
     verify: cargo test --test config_roundtrip
