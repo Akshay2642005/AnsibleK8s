@@ -80,6 +80,7 @@ mod tests {
 
     const MINIMAL: &str = "
 name: test-cluster
+k3s_version: v1.30.2+k3s2
 hosts:
   - address: 192.168.30.38
     role: server
@@ -97,6 +98,7 @@ network:
     fn loads_minimal_cluster_yaml() {
         let cfg = load_from_str(MINIMAL).expect("minimal config must load");
         assert_eq!(cfg.name, "test-cluster");
+        assert_eq!(cfg.k3s_version, "v1.30.2+k3s2");
         assert_eq!(cfg.hosts.len(), 2);
         assert_eq!(cfg.hosts[0].role, Role::Server);
         assert_eq!(
@@ -105,5 +107,8 @@ network:
         );
         assert_eq!(cfg.ssh.user, "vagrant");
         assert_eq!(cfg.ssh.port, 22);
+        // LB block is optional; minimal config carries none.
+        assert!(cfg.load_balancer.kube_vip_lb_ip_range.is_none());
+        assert!(cfg.load_balancer.metal_lb_ip_range.is_none());
     }
 }
