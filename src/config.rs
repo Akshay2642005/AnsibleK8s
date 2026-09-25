@@ -32,9 +32,12 @@ impl From<serde_yml::Error> for ConfigError {
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct ClusterConfig {
     pub name: String,
+    pub k3s_version: String,
     pub hosts: Vec<Host>,
     pub ssh: Ssh,
     pub network: Network,
+    #[serde(default)]
+    pub load_balancer: LoadBalancer,
 }
 
 /// One machine in the cluster.
@@ -64,6 +67,14 @@ pub struct Ssh {
 pub struct Network {
     pub cni_pod_cidr: IpNet,
     pub cni_service_cidr: IpNet,
+}
+
+/// Load-balancer address pools. Both pools are optional and mutually
+/// exclusive selection happens in a later epic (e03s05).
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+pub struct LoadBalancer {
+    pub kube_vip_lb_ip_range: Option<String>,
+    pub metal_lb_ip_range: Option<String>,
 }
 
 /// Load a cluster configuration from YAML text.
