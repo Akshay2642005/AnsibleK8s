@@ -1,0 +1,46 @@
+story_id: e01s02
+title: Legacy inventory converter
+status: failing
+bcps: 5
+scope_ref: S02
+tasks:
+  - id: e01s02t1
+    description: Parse legacy hosts.ini groups (master, node, k3s_cluster children) into host entries with roles.
+    verify: cargo test --test inventory_parse
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "unit"
+        - "Foundation"
+    status: failing
+  - id: e01s02t2
+    description: Map legacy group_vars keys to new config fields; resolve derivable Jinja expressions (apiserver_endpoint, node IP, MetalLB range) into computed defaults; emit documented placeholders for the rest.
+    verify: cargo test --test group_vars_convert
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "unit"
+        - "Foundation"
+    status: failing
+  - id: e01s02t3
+    description: Add the convert subcommand writing a valid cluster.yaml from an inventory directory.
+    verify: cargo run -- convert reference/inventory/sample -o /tmp/converted.yaml && cargo run -- validate /tmp/converted.yaml
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "unit"
+        - "Foundation"
+    status: failing
+  - id: e01s02t4
+    description: Converter output passes config validation for the full sample inventory (3 masters, 2 nodes).
+    verify: 'bash -c ''cargo run -- convert reference/inventory/sample -o /tmp/c.yaml && grep -q "role: server" /tmp/c.yaml && grep -q "role: agent" /tmp/c.yaml'''
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "unit"
+        - "Foundation"
+    status: failing

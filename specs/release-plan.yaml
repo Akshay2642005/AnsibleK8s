@@ -1,0 +1,58 @@
+# Release Plan — ansiblek8s-rs MVP
+# Written by: slice-tasks pre-flight (spine step 2)
+# WSJF = (user_value + time_criticality + risk_reduction) / job_size
+# Execution always respects blocked_by, regardless of rank.
+
+release: mvp
+title: ansiblek8s-rs MVP — parity with the legacy Ansible oracle
+status: planning
+scope_ref: specs/product/SCOPE_LATEST.yaml
+
+epics:
+  - id: e01
+    slug: foundation
+    title: Config schema, legacy converter, and template parity foundation
+    user_value: 8
+    time_criticality: 8
+    risk_reduction: 13   # retires the biggest unknown: Tera/Jinja2 fidelity (grill F1)
+    job_size: 5
+    wsjf: 5.8
+    wsjf_rank: 1
+    blocked_by: []
+    stories: [e01s01, e01s02, e01s03]
+
+  - id: e02
+    slug: lab-and-ssh
+    title: VM test lab, SSH execution layer, and host fact gathering
+    user_value: 8
+    time_criticality: 8
+    risk_reduction: 8    # unblocks differential verification; proves russh+sudo+TOFU
+    job_size: 5
+    wsjf: 4.8
+    wsjf_rank: 2
+    blocked_by: [e01]
+    stories: [e02s01, e02s02, e02s03]
+
+  - id: e03
+    slug: deploy
+    title: Deployment phases — prereqs, download, server bootstrap, agents, load balancing
+    user_value: 13
+    time_criticality: 5
+    risk_reduction: 5
+    job_size: 8
+    wsjf: 3.25
+    wsjf_rank: 3
+    blocked_by: [e01, e02]
+    stories: [e03s01, e03s02, e03s03, e03s04, e03s05]
+
+  - id: e04
+    slug: teardown-and-verify
+    title: Teardown, parallel execution, and differential verification against the oracle
+    user_value: 8
+    time_criticality: 8
+    risk_reduction: 8    # closes success_criteria: parity proven, not claimed
+    job_size: 5
+    wsjf: 4.8
+    wsjf_rank: 4
+    blocked_by: [e03]
+    stories: [e04s01, e04s02, e04s03]

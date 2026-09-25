@@ -1,0 +1,27 @@
+story_id: e03s04
+title: Agent join
+status: failing
+bcps: 3
+scope_ref: S10
+reference: reference/roles/k3s_agent/tasks/main.yml
+tasks:
+  - id: e03s04t1
+    description: Render agent k3s.service with server endpoint and token; start k3s-agent on each worker.
+    verify: cargo test --test agent_service -- --ignored
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing
+  - id: e03s04t2
+    description: 'Join verification: every agent appears in node list and reaches Ready within the bounded wait.'
+    verify: ./scripts/nodes-ready.sh   # expects 5 nodes Ready
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing

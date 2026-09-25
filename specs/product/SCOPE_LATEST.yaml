@@ -1,0 +1,104 @@
+# SCOPE — ansiblek8s-rs (MVP)
+# Written by: scope-work (bigpowers planning spine, step 1)
+# Source decisions: Phase 0 grill + ADR-001..005
+
+core_value: >
+  Deploy and tear down a HA k3s cluster over SSH with a single native binary,
+  replacing the Ansible control node and its Python dependency.
+
+summary: >
+  ansiblek8s-rs is a Rust CLI that reproduces the deployment behavior of the legacy
+  Ansible playbooks archived in reference/: given a cluster description and SSH access,
+  it prepares hosts, installs k3s on servers and agents, configures load balancing
+  (kube-vip + MetalLB) with flannel CNI, fetches the kubeconfig, and tears everything down.
+  >
+  The MVP is verified differentially: the legacy Ansible playbooks remain the oracle.
+  The new tool must produce an equivalent cluster from an equivalent starting inventory,
+  and must render every systemd unit and manifest byte-identically to the Jinja2 templates.
+  >
+  Users are operators who own Linux machines reachable over SSH with passwordless sudo.
+  Success means a operator can download one static binary, convert their existing
+  inventory, and run the same deployment flow they ran with Ansible.
+
+in_scope:
+  - id: S01
+    item: Cluster configuration file (single declarative file) with validation
+  - id: S02
+    item: Legacy inventory converter (inventory/* + group_vars -> cluster config)
+  - id: S03
+    item: Template rendering with golden-file parity against the Jinja2 oracle for all 10 legacy templates
+  - id: S04
+    item: Reproducible VM test lab (3 servers + 2 agents) accepting both tools
+  - id: S05
+    item: SSH execution layer: trust-on-first-use host keys, passwordless sudo, bounded retries, explicit timeouts
+  - id: S06
+    item: Host fact gathering (architecture, OS family, network interface, node IP)
+  - id: S07
+    item: Node preparation phase (sysctl, kernel modules, timezone, sudoers) with idempotent re-run
+  - id: S08
+    item: k3s binary download with sha256 verification for amd64, arm64, armhf
+  - id: S09
+    item: Server bootstrap: transient init service, node-readiness polling, token handoff, kubeconfig fetch
+  - id: S10
+    item: Agent join phase
+  - id: S11
+    item: Load-balancer manifests phase (MetalLB or kube-vip, mutually exclusive) and k3s service configuration
+  - id: S12
+    item: Teardown/reset phase returning nodes to a clean state
+  - id: S13
+    item: Parallel host execution with per-host progress output
+
+out_of_scope:
+  - item: Calico CNI support
+    why: deferred — flannel covers MVP; calico is a follow-up slice
+  - item: Cilium CNI, Hubble, and Cilium BGP control plane
+    why: deferred — largest config surface; follow-up after MVP parity proven
+  - item: Custom container registries (pull-through mirrors)
+    why: deferred — niche (air-gapped/rate-limited) use case
+  - item: HTTP proxy environment configuration
+    why: deferred — MVP targets directly connected hosts
+  - item: Dry-run / check-mode equivalent
+    why: deferred — valuable but not required to prove parity
+  - item: Sudo password support (interactive or flag)
+    why: deferred by ADR-003 — NOPASSWD required for MVP
+  - item: Upgrading an existing cluster (k3s version bumps in place)
+    why: deferred — MVP installs and tears down only
+  - item: Bastion/jump-host SSH tunneling
+    why: deferred — no current requirement
+  - item: Windows nodes
+    why: not valuable — Linux-only domain
+  - item: Full Jinja2 compatibility for legacy group_vars expressions
+    why: rejected by ADR-002 — would require an expression-language interpreter; converter replaces it
+  - item: CI pipeline (GitHub Actions)
+    why: deferred — solo-local workflow for MVP; wire-ci later
+  - item: Local-path provisioner and extra storage classes
+    why: deferred — not part of the legacy default path
+
+constraints:
+  language: Rust, stable toolchain (ADR-001)
+  privileged_access: passwordless sudo required on all target hosts (ADR-003)
+  host_verification: trust-on-first-use host keys (ADR-004)
+  test_environment: self-built VM lab, 3 servers + 2 agents (ADR-005)
+  oracle: reference/ is the read-only Ansible baseline; never modified, never committed
+  runtime_dependencies: the shipped tool must not require Python or Ansible at runtime;
+    Python + Jinja2 may be used locally as a development-only golden-file oracle
+  networking_mvp: flannel CNI + MetalLB or kube-vip only
+
+success_criteria:
+  - All 10 templates render byte-identically to the Jinja2 oracle across shared contexts (golden-file tests green)
+  - Differential run: same inventory, both tools, equivalent clusters (kubectl get nodes -o wide matches, all Ready)
+  - Idempotency: second run of every phase reports zero changes
+  - Converter: a legacy inventory directory yields a valid, accepted cluster config
+  - Teardown: all k3s artifacts removed from every node; lab reusable without manual cleanup
+  - Preflight green: cargo test && cargo clippy -- -D warnings && cargo build
+  - Fresh operator path: one static binary + one config file deploys the 5-node lab
+
+references:
+  - specs/adr/ADR-001-rust-language.md
+  - specs/adr/ADR-002-single-file-config.md
+  - specs/adr/ADR-003-passwordless-sudo.md
+  - specs/adr/ADR-004-tofu-host-keys.md
+  - specs/adr/ADR-005-vm-test-lab.md
+  - reference/ (legacy Ansible playbooks, roles, templates — the oracle)
+  - https://github.com/k0sproject/k0sctl (phase-model design reference)
+  - https://github.com/alexellis/k3sup (SSH bootstrap mechanics reference)

@@ -1,0 +1,47 @@
+story_id: e03s05
+title: Load-balancer manifests and k3s service configuration
+status: failing
+bcps: 5
+scope_ref: S11
+reference: reference/roles/k3s_server/tasks/ + reference/roles/k3s_server_post/
+tasks:
+  - id: e03s05t1
+    description: 'Unit-test the mutual-exclusion logic: MetalLB vs kube-vip vs cilium_bgp selection matches the legacy when-conditions exactly.'
+    verify: cargo test --lib lb_selection
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing
+  - id: e03s05t2
+    description: Compute extra server/agent args (tls-san, disable servicelb/traefik, taints, flannel iface) and golden-test them against legacy Jinja output.
+    verify: cargo test --test golden_server_args
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing
+  - id: e03s05t3
+    description: Apply MetalLB manifests (default path) and kube-vip manifests (when kube_vip_lb_ip_range set); verify pods Running on the lab.
+    verify: ./scripts/verify-lb.sh
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing
+  - id: e03s05t4
+    description: Apply k3s_server_post kubeconfig/manifest cleanup steps equivalent to the legacy role (bootstrap manifests removed after install).
+    verify: ./scripts/idempotency.sh post
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing

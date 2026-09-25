@@ -1,0 +1,46 @@
+story_id: e04s03
+title: Differential verification against the Ansible oracle
+status: failing
+bcps: 3
+scope_ref: success_criteria[1]
+tasks:
+  - id: e04s03t1
+    description: Reset the lab, run the legacy Ansible flow from reference/, and capture cluster state (nodes, roles, versions, LB manifests).
+    verify: ./scripts/differential.sh --phase ansible
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Verification"
+    status: failing
+  - id: e04s03t2
+    description: Reset the lab, run the new CLI from an equivalent config, and capture the same cluster state.
+    verify: ./scripts/differential.sh --phase rust
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Verification"
+    status: failing
+  - id: e04s03t3
+    description: 'Compare captures: node names, roles, k3s versions, Ready status, and LB manifests are equivalent; exit non-zero on any drift.'
+    verify: ./scripts/differential.sh --phase compare
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Verification"
+    status: failing
+  - id: e04s03t4
+    description: Full preflight stays green with every golden, idempotency, and differential script in place.
+    verify: cargo test && cargo clippy -- -D warnings && cargo build
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Verification"
+    status: failing

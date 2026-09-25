@@ -1,0 +1,37 @@
+epic_id: e03
+slug: deploy
+title: Deployment phases — prereqs, download, server bootstrap, agents, load balancing
+status: pending
+scope_ref: [S07, S08, S09, S10, S11]
+goal: >
+  The full deployment pipeline runs end-to-end on the lab: hosts prepared,
+  k3s installed with checksum verification, cluster bootstrapped,
+  agents joined, kube-vip/MetalLB configured, kubeconfig fetched.
+risk_retired: the core product behavior is demonstrable on real machines.
+
+stories:
+  - id: e03s01
+    title: Node preparation phase (idempotent)
+    bcps: 5
+    delta: ADDED
+    scope_ref: S07
+  - id: e03s02
+    title: k3s binary download with checksum verification
+    bcps: 3
+    delta: ADDED
+    scope_ref: S08
+  - id: e03s03
+    title: Server bootstrap
+    bcps: 8
+    delta: ADDED
+    scope_ref: S09
+  - id: e03s04
+    title: Agent join
+    bcps: 3
+    delta: ADDED
+    scope_ref: S10
+  - id: e03s05
+    title: Load-balancer manifests and k3s service configuration
+    bcps: 5
+    delta: ADDED
+    scope_ref: S11

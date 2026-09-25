@@ -1,0 +1,36 @@
+story_id: e04s02
+title: Parallel host execution with progress output
+status: failing
+bcps: 5
+scope_ref: S13
+tasks:
+  - id: e04s02t1
+    description: Bounded-concurrency scheduler (tokio) running a phase across hosts with per-host progress lines and bounded queueing.
+    verify: cargo test --lib scheduler
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Verification"
+    status: failing
+  - id: e04s02t2
+    description: One host failing does not cancel siblings; the run finishes and reports per-host results with a non-zero exit on any failure.
+    verify: cargo test --test scheduler_failure
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Verification"
+    status: failing
+  - id: e04s02t3
+    description: Full parallel apply over all 5 lab hosts completes with per-host phase output.
+    verify: ./scripts/full-apply.sh
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Verification"
+    status: failing

@@ -1,0 +1,46 @@
+story_id: e01s01
+title: Config schema and loader
+status: failing
+bcps: 5
+scope_ref: S01
+tasks:
+  - id: e01s01t1
+    description: Scaffold the cargo project (bin target, module layout for config/ssh/facts/phases/templates).
+    verify: cargo build
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "unit"
+        - "Foundation"
+    status: failing
+  - id: e01s01t2
+    description: Define ClusterConfig structs (hosts with roles, network settings, k3s version, LB config, SSH options) with serde derives.
+    verify: cargo test --lib config
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "unit"
+        - "Foundation"
+    status: failing
+  - id: e01s01t3
+    description: 'Implement validation: missing required fields, invalid CIDR, duplicate host entries, unknown roles all produce typed errors.'
+    verify: cargo test --test config_validation
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "unit"
+        - "Foundation"
+    status: failing
+  - id: e01s01t4
+    description: Ship an example cluster.yaml and prove serialize/deserialize round-trips losslessly.
+    verify: cargo test --test config_roundtrip
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "unit"
+        - "Foundation"
+    status: failing

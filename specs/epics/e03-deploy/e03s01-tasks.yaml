@@ -1,0 +1,37 @@
+story_id: e03s01
+title: Node preparation phase (idempotent)
+status: failing
+bcps: 5
+scope_ref: S07
+reference: reference/roles/prereq/tasks/main.yml
+tasks:
+  - id: e03s01t1
+    description: sysctl steps (ip_forward, router advertisements, bridge-nf) with read-before-write so unchanged values report zero changes.
+    verify: cargo test --test sysctl
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing
+  - id: e03s01t2
+    description: Timezone, br_netfilter module load, modules-load.d file, and RedHat-only sudoers secure_path edit with visudo validation.
+    verify: cargo test --test prereq_steps
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing
+  - id: e03s01t3
+    description: Run the prereq phase twice on the lab; second run reports zero changed operations.
+    verify: ./scripts/idempotency.sh prereq
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing

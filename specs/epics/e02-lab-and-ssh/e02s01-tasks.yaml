@@ -1,0 +1,50 @@
+story_id: e02s01
+title: VM test lab provisioning
+status: failing
+bcps: 3
+scope_ref: S04
+tasks:
+  - id: e02s01t1
+    description: Detect an available local provider (Vagrant or multipass) and fail with clear guidance when none exists.
+    verify: ./lab/check-provider.sh
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Lab"
+        - "SSH"
+    status: failing
+  - id: e02s01t2
+    description: Provision 3 servers + 2 agents with SSH key auth, NOPASSWD sudo, and static addresses from the lab network.
+    verify: ./lab/up.sh && ./lab/status.sh   # status reports 5/5 reachable
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Lab"
+        - "SSH"
+    status: failing
+  - id: e02s01t3
+    description: Provide destroy/reset so the lab is reusable between differential runs without manual cleanup.
+    verify: ./lab/destroy.sh && ./lab/status.sh   # status reports 0/5
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Lab"
+        - "SSH"
+    status: failing
+  - id: e02s01t4
+    description: Generate the lab inventory consumed by both the legacy Ansible oracle and the new CLI.
+    verify: test -f lab/hosts.ini && test -f lab/cluster.yaml
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Lab"
+        - "SSH"
+    status: failing

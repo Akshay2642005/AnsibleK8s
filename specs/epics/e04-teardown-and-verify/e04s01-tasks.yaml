@@ -1,0 +1,37 @@
+story_id: e04s01
+title: Teardown/reset phase
+status: failing
+bcps: 5
+scope_ref: S12
+reference: reference/roles/reset/tasks/main.yml
+tasks:
+  - id: e04s01t1
+    description: Stop and disable k3s services, run the k3s uninstall script, and recursively unmount nested mount points (legacy umount_with_children).
+    verify: cargo test --test unmount_tree
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Verification"
+    status: failing
+  - id: e04s01t2
+    description: 'Full teardown on the lab leaves no k3s artifacts: no services, no /var/lib/rancher, no mounts.'
+    verify: ./scripts/verify-teardown.sh
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Verification"
+    status: failing
+  - id: e04s01t3
+    description: 'Teardown is idempotent: running on an already-clean host succeeds with zero errors.'
+    verify: ./scripts/idempotency.sh teardown
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Verification"
+    status: failing

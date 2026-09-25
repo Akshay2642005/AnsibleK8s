@@ -1,0 +1,37 @@
+story_id: e03s02
+title: k3s binary download with checksum verification
+status: failing
+bcps: 3
+scope_ref: S08
+reference: reference/roles/download/tasks/main.yml
+tasks:
+  - id: e03s02t1
+    description: Architecture mapping (x86_64->k3s, aarch64->k3s-arm64, arm 32-bit->k3s-armhf) covering all three legacy variants.
+    verify: cargo test --lib arch
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing
+  - id: e03s02t2
+    description: Download k3s binary to /usr/local/bin with sha256 verification against the release checksum file; reject on mismatch.
+    verify: cargo test --test download_checksum -- --ignored
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing
+  - id: e03s02t3
+    description: Skip download when the installed binary already matches version and checksum (idempotent).
+    verify: ./scripts/idempotency.sh download
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing

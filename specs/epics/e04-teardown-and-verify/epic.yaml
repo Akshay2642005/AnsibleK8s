@@ -1,0 +1,27 @@
+epic_id: e04
+slug: teardown-and-verify
+title: Teardown, parallel execution, and differential verification against the oracle
+status: pending
+scope_ref: [S12, S13]
+goal: >
+  Clusters can be torn down cleanly, hosts operate in parallel with per-host
+  progress, and a differential run proves both tools produce equivalent clusters
+  from equivalent inventories.
+risk_retired: success_criteria proven with evidence, not claims.
+
+stories:
+  - id: e04s01
+    title: Teardown/reset phase
+    bcps: 5
+    delta: ADDED
+    scope_ref: S12
+  - id: e04s02
+    title: Parallel host execution with progress output
+    bcps: 5
+    delta: ADDED
+    scope_ref: S13
+  - id: e04s03
+    title: Differential verification against the Ansible oracle
+    bcps: 3
+    delta: ADDED
+    scope_ref: success_criteria[1]

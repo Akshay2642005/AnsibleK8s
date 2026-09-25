@@ -1,0 +1,39 @@
+story_id: e02s03
+title: Host fact gathering
+status: failing
+bcps: 3
+scope_ref: S06
+tasks:
+  - id: e02s03t1
+    description: 'Gather facts over SSH: architecture (uname), OS family (/etc/os-release), default interface and node IP (ip route), user home.'
+    verify: cargo test --test facts -- --ignored
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Lab"
+        - "SSH"
+    status: failing
+  - id: e02s03t2
+    description: Map facts into the same roles ansible_facts plays in the legacy flow (arch selection, iface/IP for k3s_node_ip, OS-conditional steps).
+    verify: cargo test --lib facts_mapping
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Lab"
+        - "SSH"
+    status: failing
+  - id: e02s03t3
+    description: 'Differential check: CLI facts match `ansible -m setup` subset on every lab host.'
+    verify: ./scripts/verify-facts.sh
+    risk: P1
+    allure:
+      severity: high
+      categories:
+        - "integration"
+        - "Lab"
+        - "SSH"
+    status: failing

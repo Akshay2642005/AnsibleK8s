@@ -1,0 +1,26 @@
+epic_id: e02
+slug: lab-and-ssh
+title: VM test lab, SSH execution layer, and host fact gathering
+status: pending
+scope_ref: [S04, S05, S06]
+goal: >
+  Five reproducible VMs reachable by the CLI with TOFU host keys, NOPASSWD sudo,
+  bounded retries, explicit timeouts, plus fact gathering that matches the Ansible oracle.
+risk_retired: russh integration, sudo -n enforcement, and the differential lab are proven.
+
+stories:
+  - id: e02s01
+    title: VM test lab provisioning
+    bcps: 3
+    delta: ADDED
+    scope_ref: S04
+  - id: e02s02
+    title: SSH execution layer
+    bcps: 8
+    delta: ADDED
+    scope_ref: S05
+  - id: e02s03
+    title: Host fact gathering
+    bcps: 3
+    delta: ADDED
+    scope_ref: S06

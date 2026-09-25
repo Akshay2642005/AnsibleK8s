@@ -1,0 +1,61 @@
+story_id: e02s02
+title: SSH execution layer
+status: failing
+bcps: 8
+scope_ref: S05
+tasks:
+  - id: e02s02t1
+    description: Connect via russh with key authentication, explicit connect timeout, and known_hosts loading.
+    verify: cargo test --test ssh_connect -- --ignored
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Lab"
+        - "SSH"
+    status: failing
+  - id: e02s02t2
+    description: 'Implement TOFU: pin unknown host keys, hard-fail on fingerprint mismatch with actionable error.'
+    verify: cargo test --test tofu_known_hosts
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Lab"
+        - "SSH"
+    status: failing
+  - id: e02s02t3
+    description: Run remote commands with explicit timeouts and capture stdout/stderr/exit code; enforce sudo -n with a clear NOPASSWD error when sudo would prompt.
+    verify: cargo test --test ssh_exec -- --ignored
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Lab"
+        - "SSH"
+    status: failing
+  - id: e02s02t4
+    description: Bounded retry with exponential backoff for transient connection failures; never retry unbounded.
+    verify: cargo test --lib retry
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Lab"
+        - "SSH"
+    status: failing
+  - id: e02s02t5
+    description: Upload files (templates, scripts) with owner/mode enforcement and content verification after write.
+    verify: cargo test --test file_upload -- --ignored
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Lab"
+        - "SSH"
+    status: failing

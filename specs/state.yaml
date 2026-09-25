@@ -1,0 +1,10 @@
+workflow_mode: solo-git
+active_epic: e01-foundation
+handoff:
+  next_skill: kickoff-branch
+  phase: 1-plan
+  note: >-
+    Planning spine complete for active epic e01 (scope-work, slice-tasks, plan-work).
+    ADR-001..005 recorded. Rust skills installed. e02-e04 retain slice-tasks
+    skeletons; run plan-work when each epic activates (build-epic cadence).
+    YAML backend decision deferred to e01s01 implementation (config seam).

@@ -1,0 +1,26 @@
+epic_id: e01
+slug: foundation
+title: Config schema, legacy converter, and template parity foundation
+status: pending
+scope_ref: [S01, S02, S03]
+goal: >
+  A cargo workspace that loads cluster.yaml, converts the legacy inventory,
+  and proves all 10 templates render byte-identically to the Jinja2 oracle.
+risk_retired: Tera-vs-Jinja fidelity (grill F1) proven before any SSH code exists.
+
+stories:
+  - id: e01s01
+    title: Config schema and loader
+    bcps: 5
+    delta: ADDED
+    scope_ref: S01
+  - id: e01s02
+    title: Legacy inventory converter
+    bcps: 5
+    delta: ADDED
+    scope_ref: S02
+  - id: e01s03
+    title: Template port and golden-file parity harness
+    bcps: 8
+    delta: ADDED
+    scope_ref: S03

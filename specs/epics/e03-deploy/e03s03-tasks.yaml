@@ -1,0 +1,47 @@
+story_id: e03s03
+title: Server bootstrap
+status: failing
+bcps: 8
+scope_ref: S09
+reference: reference/roles/k3s_server/tasks/main.yml
+tasks:
+  - id: e03s03t1
+    description: Render and install k3s.service from the golden-tested template; start k3s via transient systemd-run init unit as the legacy flow does.
+    verify: cargo test --test server_service -- --ignored
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing
+  - id: e03s03t2
+    description: Poll node readiness with bounded retries until all expected masters joined; fetch k3s-init logs on failure for diagnosis.
+    verify: cargo test --test node_wait
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing
+  - id: e03s03t3
+    description: Token handoff (read node-token with permission dance) and kubeconfig fetch with apiserver endpoint rewrite to the virtual IP.
+    verify: bash -c 'cargo run -- apply --only server && test -f ./kubeconfig && grep -q "https://" ./kubeconfig'
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing
+  - id: e03s03t4
+    description: 'Single-server lab bootstrap end-to-end: k3s healthy, API answering on the endpoint.'
+    verify: ./scripts/verify-server.sh
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "integration"
+        - "Deploy"
+    status: failing

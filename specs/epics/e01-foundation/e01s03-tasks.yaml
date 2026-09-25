@@ -1,0 +1,64 @@
+story_id: e01s03
+title: Template port and golden-file parity harness
+status: failing
+bcps: 8
+scope_ref: S03
+notes: >
+  Retires grill risk F1: Tera requires keyword arguments and lacks several Jinja filters.
+  The Python Jinja2 oracle is a development-only tool; committed golden files gate cargo test.
+tasks:
+  - id: e01s03t1
+    description: Build the Python oracle script that renders all 10 legacy .j2 templates with shared sample contexts into tests/golden/*.golden.
+    verify: python3 tests/oracle/render_golden.py && test "$(ls tests/golden | wc -l)" -eq 10
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "unit"
+        - "Foundation"
+        - "Golden File"
+    status: failing
+  - id: e01s03t2
+    description: 'Implement custom Tera filters: ipwrap, ipsubnet, ipaddr_prefix, bool, join_by_name (map(''join'') equivalent).'
+    verify: cargo test --lib filters
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "unit"
+        - "Foundation"
+        - "Golden File"
+    status: failing
+  - id: e01s03t3
+    description: Port all 10 templates to Tera (keyword-argument rewrite; keep golden output byte-identical).
+    verify: cargo test --test golden_templates
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "unit"
+        - "Foundation"
+        - "Golden File"
+    status: failing
+  - id: e01s03t4
+    description: Golden parity test compares Tera output against committed goldens for every template and context.
+    verify: cargo test --test golden_templates -- --nocapture
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "unit"
+        - "Foundation"
+        - "Golden File"
+    status: failing
+  - id: e01s03t5
+    description: Document regeneration workflow (oracle change requires explicit golden regeneration review).
+    verify: grep -q render_golden README.md
+    risk: P0
+    allure:
+      severity: critical
+      categories:
+        - "unit"
+        - "Foundation"
+        - "Golden File"
+    status: failing
