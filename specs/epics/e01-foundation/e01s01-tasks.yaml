@@ -13,7 +13,7 @@ tasks:
       categories:
         - "unit"
         - "Foundation"
-    status: failing
+    status: passing
   - id: e01s01t2
     description: Define ClusterConfig structs (hosts with roles, network settings, k3s version, LB config, SSH options) with serde derives.
     verify: cargo test --lib config
@@ -23,7 +23,7 @@ tasks:
       categories:
         - "unit"
         - "Foundation"
-    status: failing
+    status: passing
   - id: e01s01t3
     description: 'Implement validation: missing required fields, invalid CIDR, duplicate host entries, unknown roles all produce typed errors.'
     verify: cargo test --test config_validation
