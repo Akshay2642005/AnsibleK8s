@@ -8,7 +8,7 @@ use std::collections::HashSet;
 use std::net::IpAddr;
 
 use ipnet::IpNet;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Errors raised while loading or validating a cluster configuration.
 #[derive(Debug, PartialEq, Eq)]
@@ -48,7 +48,7 @@ impl From<serde_yml::Error> for ConfigError {
 }
 
 /// Fully validated cluster configuration.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ClusterConfig {
     pub name: String,
     pub k3s_version: String,
@@ -59,21 +59,22 @@ pub struct ClusterConfig {
 }
 
 /// One machine in the cluster.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Host {
     pub address: IpAddr,
     pub role: Role,
 }
 
 /// The k3s role a host plays.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Role {
     Server,
     Agent,
 }
 
 /// SSH connection options for target hosts.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Ssh {
     pub user: String,
@@ -81,7 +82,7 @@ pub struct Ssh {
 }
 
 /// Kubernetes network ranges.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Network {
     pub cni_pod_cidr: IpNet,
     pub cni_service_cidr: IpNet,
@@ -89,7 +90,7 @@ pub struct Network {
 
 /// Load-balancer address pools. Both pools are optional and mutually
 /// exclusive selection happens in a later epic (e03s05).
-#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct LoadBalancer {
     pub kube_vip_lb_ip_range: Option<String>,
