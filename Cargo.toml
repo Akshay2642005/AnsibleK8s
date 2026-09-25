@@ -4,3 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+serde = { version = "1", features = ["derive"] }
+# SLOPCHECK [SUS] — approved by user 2026-09-25; pinned via Cargo.lock (0.0.x caret = exact).
+# Confined to config::load_from_str seam so the backend stays swappable.
+serde_yml = "0.0.13"
+ipnet = { version = "2.12", features = ["serde"] }
