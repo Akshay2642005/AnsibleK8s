@@ -1,10 +1,18 @@
 workflow_mode: solo-git
 active_epic: e01-foundation
+branch: e01-foundation
+worktree: /Users/akshay/dev/Projects/e01-foundation
+story_lock:
+  story_id: e01s01
+  locked_by: "agent: kickoff-branch"
+  locked_at: "2026-09-25T14:55:52Z"
 handoff:
-  next_skill: kickoff-branch
-  phase: 1-plan
+  next_skill: develop-tdd
+  phase: 1-plan   # planning complete; build begins
+  preflight: green
   note: >-
-    Planning spine complete for active epic e01 (scope-work, slice-tasks, plan-work).
-    ADR-001..005 recorded. Rust skills installed. e02-e04 retain slice-tasks
-    skeletons; run plan-work when each epic activates (build-epic cadence).
-    YAML backend decision deferred to e01s01 implementation (config seam).
+    kickoff-branch complete: worktree isolated on branch e01-foundation,
+    reference/ oracle copied in (locally ignored), Preflight green,
+    e01s01 locked. Next: develop-tdd on e01s01 (config schema + loader).
+    YAML backend decision still deferred to implementation (config seam).
+    e02-e04 retain slice-tasks skeletons; run plan-work when each activates.
