@@ -12,7 +12,6 @@
 #
 # Env:
 #   VERIFY_TEST_CMD    command executed inside each revision (default: cargo test)
-#   VERIFY_TARGET_DIR  shared CARGO_TARGET_DIR to keep re-builds fast (default: <root>/target)
 set -euo pipefail
 
 TEST_CMD="${VERIFY_TEST_CMD:-cargo test}"
@@ -24,11 +23,14 @@ info() { echo "  $*"; }
 # --- helpers -----------------------------------------------------------------
 
 # run_suite <root> <rev> <logfile>; echoes exit code (never aborts the script)
+#
+# NOTE: never share CARGO_TARGET_DIR across worktrees — the temporary
+# revision's build would overwrite the current worktree's lib artifacts
+# while fingerprints still say "fresh" (stale-rlib link errors).
 run_suite() {
   local root="$1" rev="$2" log="$3" rc=0
-  local target="${VERIFY_TARGET_DIR:-$root/target}"
   if [ "$rev" = "WORKTREE" ]; then
-    (cd "$root" && CARGO_TARGET_DIR="$target" bash -c "$TEST_CMD") >"$log" 2>&1 || rc=$?
+    (cd "$root" && bash -c "$TEST_CMD") >"$log" 2>&1 || rc=$?
   else
     local wt
     wt="$(mktemp -d "${TMPDIR:-/tmp}/tdd-red.XXXXXX")"
@@ -36,7 +38,7 @@ run_suite() {
       echo "999" >"$log"; echo "worktree-add failed for $rev" >>"$log"
       return 999
     fi
-    (cd "$wt" && CARGO_TARGET_DIR="$target" bash -c "$TEST_CMD") >"$log" 2>&1 || rc=$?
+    (cd "$wt" && bash -c "$TEST_CMD") >"$log" 2>&1 || rc=$?
     git -C "$root" worktree remove --force "$wt" >/dev/null 2>&1 || true
     rm -rf "$wt" 2>/dev/null || true
   fi
