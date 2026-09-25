@@ -136,6 +136,13 @@ pub fn load_from_str(yaml: &str) -> Result<ClusterConfig, ConfigError> {
     validate(raw)
 }
 
+/// Load and validate a cluster configuration from a file path.
+pub fn load(path: &std::path::Path) -> Result<ClusterConfig, ConfigError> {
+    let text = std::fs::read_to_string(path)
+        .map_err(|err| ConfigError::Parse(format!("cannot read {}: {err}", path.display())))?;
+    load_from_str(&text)
+}
+
 /// Convert the raw YAML shape into the typed configuration, one distinct
 /// error per failure mode.
 fn validate(raw: RawConfig) -> Result<ClusterConfig, ConfigError> {
