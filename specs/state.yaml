@@ -2,17 +2,17 @@ workflow_mode: solo-git
 active_epic: e01-foundation
 branch: e01-foundation
 worktree: /Users/akshay/dev/Projects/e01-foundation
-story_lock:
-  story_id: e01s01
-  locked_by: "agent: kickoff-branch"
-  locked_at: "2026-09-25T14:55:52Z"
+story_lock: null
 handoff:
   next_skill: develop-tdd
-  phase: 1-plan   # planning complete; build begins
+  phase: 2-verify   # e01s01 built green; awaiting manual verification sign-off
   preflight: green
   note: >-
-    kickoff-branch complete: worktree isolated on branch e01-foundation,
-    reference/ oracle copied in (locally ignored), Preflight green,
-    e01s01 locked. Next: develop-tdd on e01s01 (config schema + loader).
-    YAML backend decision still deferred to implementation (config seam).
-    e02-e04 retain slice-tasks skeletons; run plan-work when each activates.
+    e01s01 complete: 5 TDD cycles as RED/GREEN commit pairs, every cycle
+    passed scripts/verify-tdd-red-commit.sh (authored here, 4/4 self-test;
+    one real bug found and fixed: cross-worktree target sharing staled rlibs).
+    9 tests green, all 4 task verifies exit 0, ledger flipped to passing.
+    YAML backend decided and approved: serde_yml 0.0.13 (Cargo.lock pinned,
+    confined to config::load_from_str seam). Next: manual verification
+    sign-off, then develop-tdd on e01s02 (legacy converter) from
+    specs/epics/e01-foundation/e01s02-tasks.yaml.

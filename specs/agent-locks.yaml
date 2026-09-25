@@ -1,5 +1,1 @@
-locks:
-  - story_id: e01s01
-    locked_by: "agent: kickoff-branch"
-    locked_at: "2026-09-25T14:55:52Z"
-    files_touched: []
+locks: []

@@ -1,6 +1,6 @@
 story_id: e01s01
 title: Config schema and loader
-status: failing
+status: passing
 bcps: 5
 scope_ref: S01
 tasks:
@@ -43,4 +43,4 @@ tasks:
       categories:
         - "unit"
         - "Foundation"
-    status: failing
+    status: passing
