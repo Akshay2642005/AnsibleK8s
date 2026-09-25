@@ -1,5 +1,7 @@
 //! Round-trip fidelity: load → serialize → load → equal.
 
+use std::path::Path;
+
 use ansiblek8s_rs::config::load_from_str;
 
 const VALID: &str = "
@@ -34,4 +36,16 @@ fn serializes_roles_as_lowercase() {
     let yaml = serde_yml::to_string(&original).expect("config must serialize");
     assert!(yaml.contains("role: server"), "got:\n{yaml}");
     assert!(yaml.contains("role: agent"), "got:\n{yaml}");
+}
+
+#[test]
+fn shipped_example_config_loads() {
+    // Rot guard: the example we hand to users must always pass validation.
+    let cfg = ansiblek8s_rs::config::load(Path::new("examples/cluster.yaml"))
+        .expect("examples/cluster.yaml must load and validate");
+    assert_eq!(cfg.hosts.len(), 5, "sample inventory has 3 servers + 2 agents");
+    assert_eq!(
+        cfg.hosts.iter().filter(|h| h.role == ansiblek8s_rs::config::Role::Server).count(),
+        3
+    );
 }
