@@ -1,3 +1,4 @@
+pub mod cli;
 pub mod config;
 pub mod convert;
 pub mod facts;

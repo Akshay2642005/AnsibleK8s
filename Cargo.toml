@@ -9,3 +9,5 @@ serde = { version = "1", features = ["derive"] }
 # Confined to config::load_from_str seam so the backend stays swappable.
 serde_yml = "0.0.13"
 ipnet = { version = "2.12", features = ["serde"] }
+# SLOPCHECK [OK] — ADR-001 approved clap for the CLI surface.
+clap = { version = "4.5", features = ["derive"] }
