@@ -9,9 +9,13 @@
 //! EOF and failed with `13:1 expecting [= or :]`).
 
 use std::fmt;
+use std::fs;
 use std::net::IpAddr;
+use std::path::Path;
 
-use crate::config::{Host, Role};
+use ipnet::IpNet;
+
+use crate::config::{ClusterConfig, Host, LoadBalancer, Network, Role, Ssh};
 
 /// Errors raised while converting a legacy inventory.
 #[derive(Debug, PartialEq, Eq)]
@@ -112,6 +116,99 @@ fn role_of(section: &str, children: &Option<Vec<String>>) -> Option<Role> {
         return None; // group exists but is not a cluster child
     }
     Some(role)
+}
+
+/// A legacy key that could not be converted as-is.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Warning {
+    /// The legacy group_vars key (or dotted field path) it affects.
+    pub key: String,
+    /// Why the key could not be converted directly.
+    pub reason: String,
+}
+
+/// Build a [`ClusterConfig`] from a legacy inventory directory
+/// (`hosts.ini` + `group_vars/all.yaml`).
+///
+/// Reads only — conversion never writes (the CLI's `-o` target is the sole
+/// write, in t3). Mapping policy: known keys map directly
+/// (`k3s_version`, `cluster_cidr`); known-derivable keys resolve silently
+/// (`apiserver_endpoint` from the first `[master]` host); required fields
+/// no inventory dir can supply (`ssh.user`) get a placeholder **and** a
+/// warning; every remaining unmapped key must be reported — the
+/// no-silent-drop test in t2 asserts that completeness.
+pub fn inventory(dir: &Path) -> Result<(ClusterConfig, Vec<Warning>), ConvertError> {
+    let ini_path = dir.join("hosts.ini");
+    let ini_src = fs::read_to_string(&ini_path)
+        .map_err(|err| ConvertError::Parse(format!("{}: {err}", ini_path.display())))?;
+    let hosts = parse_hosts(&ini_src)?;
+
+    let gv_path = dir.join("group_vars").join("all.yaml");
+    let gv_src = fs::read_to_string(&gv_path)
+        .map_err(|err| ConvertError::Parse(format!("{}: {err}", gv_path.display())))?;
+    let gv: serde_yml::Value = serde_yml::from_str(&gv_src)
+        .map_err(|err| ConvertError::Parse(format!("{}: {err}", gv_path.display())))?;
+
+    let k3s_version = gv
+        .get("k3s_version")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| ConvertError::Parse("missing required key: k3s_version".to_string()))?
+        .to_string();
+
+    let cni_pod_cidr: IpNet = match gv.get("cluster_cidr").and_then(|v| v.as_str()) {
+        Some(raw) => raw
+            .parse()
+            .map_err(|_| ConvertError::Parse(format!("invalid cluster_cidr: {raw}")))?,
+        None => "10.42.0.0/16"
+            .parse()
+            .expect("static k3s default pod CIDR is valid"),
+    };
+    let cni_service_cidr: IpNet = "10.43.0.0/16"
+        .parse()
+        .expect("static k3s default service CIDR is valid");
+
+    let mut warnings = Vec::new();
+
+    // apiserver_endpoint is derivable from the first [master] host (the
+    // runtime computes it per ADR-002): silent when masters exist.
+    if gv.get("apiserver_endpoint").is_some()
+        && !hosts.iter().any(|h| h.role == Role::Server)
+    {
+        warnings.push(Warning {
+            key: "apiserver_endpoint".to_string(),
+            reason: "underivable: no [master] hosts to derive from".to_string(),
+        });
+    }
+
+    // ssh.user cannot come from an inventory dir (legacy remote_user lives in
+    // ansible.cfg outside it): placeholder + warning, never silent.
+    warnings.push(Warning {
+        key: "ssh.user".to_string(),
+        reason: "not derivable from the inventory dir (legacy remote_user lives \
+                 outside it): PLACEHOLDER emitted"
+            .to_string(),
+    });
+
+    let name = dir
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "converted-cluster".to_string());
+
+    let cfg = ClusterConfig {
+        name,
+        k3s_version,
+        hosts,
+        ssh: Ssh {
+            user: "PLACEHOLDER".to_string(),
+            port: 22,
+        },
+        network: Network {
+            cni_pod_cidr,
+            cni_service_cidr,
+        },
+        load_balancer: LoadBalancer::default(),
+    };
+    Ok((cfg, warnings))
 }
 
 /// Extract the IP from the documented forms: `192.168.30.38`,
