@@ -1,1 +1,5 @@
-locks: []
+locks:
+  - story_id: e01s02
+    locked_by: "agent: develop-tdd"
+    locked_at: "2026-09-26T00:00:00Z"
+    files_touched: []
