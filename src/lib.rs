@@ -1,4 +1,5 @@
 pub mod config;
+pub mod convert;
 pub mod facts;
 pub mod phases;
 pub mod ssh;
