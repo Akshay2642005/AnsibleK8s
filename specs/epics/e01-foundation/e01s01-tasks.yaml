@@ -7,6 +7,7 @@ tasks:
   - id: e01s01t1
     description: Scaffold the cargo project (bin target, module layout for config/ssh/facts/phases/templates).
     verify: cargo build
+    evidence: 'cargo build exit 0 — rerun 2026-09-26; scaffold RED/GREEN pairs 56b9d12/5430fa2, 9992db5/b00a2a3 (gated 2026-09-25)'
     risk: P0
     allure:
       severity: critical
@@ -17,6 +18,7 @@ tasks:
   - id: e01s01t2
     description: Define ClusterConfig structs (hosts with roles, network settings, k3s version, LB config, SSH options) with serde derives.
     verify: cargo test --lib config
+    evidence: 'cargo test --lib config: 2 passed — rerun 2026-09-26; unit pairs 56b9d12/5430fa2, 452c194/69dc473 (gated 2026-09-25)'
     risk: P0
     allure:
       severity: critical
@@ -27,6 +29,7 @@ tasks:
   - id: e01s01t3
     description: 'Implement validation: missing required fields, invalid CIDR, duplicate host entries, unknown roles all produce typed errors.'
     verify: cargo test --test config_validation
+    evidence: 'cargo test --test config_validation: 4 passed — rerun 2026-09-26; pair ce305bf/1c8a5b7 (gated 2026-09-25)'
     risk: P0
     allure:
       severity: critical
@@ -37,6 +40,7 @@ tasks:
   - id: e01s01t4
     description: Ship an example cluster.yaml and prove serialize/deserialize round-trips losslessly.
     verify: cargo test --test config_roundtrip
+    evidence: 'cargo test --test config_roundtrip: 3 passed — rerun 2026-09-26; pairs f8ea7ea/4253e95, e678f98/caad5e8 (gated 2026-09-25)'
     risk: P0
     allure:
       severity: critical
