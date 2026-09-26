@@ -67,10 +67,10 @@ Legacy inventory directory (`hosts.ini`, `group_vars/*.yaml`).
 - hosts.ini edge syntax (vars in lines, aliases) → parser tests cover the documented forms only.
 
 ## 17. Acceptance criteria
-- [ ] Sample inventory converts and validates (task e01s02t3/t4 green)
-- [ ] Underivable keys produce warnings, not silent drops
-- [ ] `reference/` unmodified (assert via `git -C reference status` unchanged or file mtimes)
-- [ ] Preflight green
+- [x] Sample inventory converts and validates (task e01s02t3/t4 green)
+- [x] Underivable keys produce warnings, not silent drops
+- [x] `reference/` unmodified (assert via `git -C reference status` unchanged or file mtimes)
+- [x] Preflight green
 
 ## 18. Open questions
 - None.
