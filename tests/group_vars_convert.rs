@@ -51,3 +51,45 @@ fn inventory_builds_complete_config_from_legacy_dirs() {
     );
     let _ = fs::remove_dir_all(&tmp);
 }
+
+#[test]
+fn no_legacy_key_is_silently_dropped() {
+    let (cfg, warnings) = convert::inventory(Path::new(SAMPLE_DIR)).expect("converts");
+
+    // Enumerate every key the oracle's group_vars actually defines.
+    let gv_src = fs::read_to_string(Path::new(SAMPLE_DIR).join("group_vars/all.yaml"))
+        .expect("oracle group_vars readable");
+    let gv: serde_yml::Value = serde_yml::from_str(&gv_src).expect("group_vars is YAML");
+    let keys: Vec<String> = gv
+        .as_mapping()
+        .expect("group_vars is a mapping")
+        .keys()
+        .map(ToString::to_string)
+        .collect();
+    assert!(keys.len() > 30, "sanity: oracle defines many keys, got {}", keys.len());
+
+    // Accounted = mapped into a field, resolved to a computed default, or
+    // warned about. Anything else was silently dropped.
+    const MAPPED: [&str; 2] = ["k3s_version", "cluster_cidr"];
+    const RESOLVED: [&str; 1] = ["apiserver_endpoint"];
+    for key in &keys {
+        if MAPPED.contains(&key.as_str()) || RESOLVED.contains(&key.as_str()) {
+            continue;
+        }
+        assert!(
+            warnings.iter().any(|w| &w.key == key && !w.reason.is_empty()),
+            "group_vars key {key:?} was silently dropped"
+        );
+    }
+
+    // Underivable metallb chain: placeholder in the config field, not silence.
+    assert_eq!(
+        cfg.load_balancer.metal_lb_ip_range.as_deref(),
+        Some("PLACEHOLDER(metallb_ip_range)"),
+        "underivable metallb_ip_range must emit a documented placeholder"
+    );
+    assert!(
+        warnings.iter().any(|w| w.key == "k3s_node_ip"),
+        "facts-dependent k3s_node_ip must be warned about"
+    );
+}
