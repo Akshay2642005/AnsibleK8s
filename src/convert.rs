@@ -169,15 +169,35 @@ pub fn inventory(dir: &Path) -> Result<(ClusterConfig, Vec<Warning>), ConvertErr
 
     let mut warnings = Vec::new();
 
-    // apiserver_endpoint is derivable from the first [master] host (the
-    // runtime computes it per ADR-002): silent when masters exist.
-    if gv.get("apiserver_endpoint").is_some()
-        && !hosts.iter().any(|h| h.role == Role::Server)
-    {
-        warnings.push(Warning {
-            key: "apiserver_endpoint".to_string(),
-            reason: "underivable: no [master] hosts to derive from".to_string(),
-        });
+    // No-silent-drop sweep: every group_vars key is either mapped above,
+    // resolved to a computed default, or warned about with a reason.
+    const MAPPED: [&str; 2] = ["k3s_version", "cluster_cidr"];
+    if let Some(mapping) = gv.as_mapping() {
+        for (k, v) in mapping {
+            let key = k.to_string();
+            if MAPPED.contains(&key.as_str()) {
+                continue;
+            }
+            if key == "apiserver_endpoint" {
+                // Derivable from the first [master] host (the runtime computes
+                // it per ADR-002): silent when masters exist, warned otherwise.
+                if !hosts.iter().any(|h| h.role == Role::Server) {
+                    warnings.push(Warning {
+                        key,
+                        reason: "underivable: no [master] hosts to derive from".to_string(),
+                    });
+                }
+                continue;
+            }
+            let reason = if v.as_str().is_some_and(|s| s.contains("{{")) {
+                "jinja expression needs live facts or runtime evaluation: \
+                 underivable from the inventory alone"
+                    .to_string()
+            } else {
+                "legacy-only setting with no cluster.yaml field".to_string()
+            };
+            warnings.push(Warning { key, reason });
+        }
     }
 
     // ssh.user cannot come from an inventory dir (legacy remote_user lives in
@@ -188,6 +208,12 @@ pub fn inventory(dir: &Path) -> Result<(ClusterConfig, Vec<Warning>), ConvertErr
                  outside it): PLACEHOLDER emitted"
             .to_string(),
     });
+
+    // The metallb chain hangs off ansible_default_ipv4 (live facts): emit a
+    // documented placeholder so the operator must fill it in explicitly.
+    let metal_lb_ip_range = gv
+        .get("metallb_ip_range")
+        .map(|_| "PLACEHOLDER(metallb_ip_range)".to_string());
 
     let name = dir
         .file_name()
@@ -206,7 +232,10 @@ pub fn inventory(dir: &Path) -> Result<(ClusterConfig, Vec<Warning>), ConvertErr
             cni_pod_cidr,
             cni_service_cidr,
         },
-        load_balancer: LoadBalancer::default(),
+        load_balancer: LoadBalancer {
+            kube_vip_lb_ip_range: None,
+            metal_lb_ip_range,
+        },
     };
     Ok((cfg, warnings))
 }
