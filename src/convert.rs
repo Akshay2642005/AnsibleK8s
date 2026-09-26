@@ -39,11 +39,14 @@ impl std::error::Error for ConvertError {}
 /// for conversion).
 ///
 /// Groups: `[master]` → [`Role::Server`], `[node]` → [`Role::Agent`].
-/// `[k3s_cluster:children]` and any other section are membership
-/// metadata, not host lists, and contribute no hosts.
+/// When `[k3s_cluster:children]` lists group names, only listed groups
+/// contribute hosts (a group present but not a cluster child is not a
+/// cluster member); an absent or empty children list is permissive.
+/// Other sections contribute no hosts.
 pub fn parse_hosts(ini_content: &str) -> Result<Vec<Host>, ConvertError> {
+    let children = cluster_children(ini_content);
     let mut hosts = Vec::new();
-    let mut role: Option<Role> = None;
+    let mut section = "";
     for (idx, line) in ini_content.lines().enumerate() {
         let line = line.trim();
         let line_no = idx + 1;
@@ -51,18 +54,13 @@ pub fn parse_hosts(ini_content: &str) -> Result<Vec<Host>, ConvertError> {
             continue;
         }
         if let Some(rest) = line.strip_prefix('[') {
-            let name = rest.strip_suffix(']').ok_or_else(|| {
+            section = rest.strip_suffix(']').ok_or_else(|| {
                 ConvertError::Parse(format!("line {line_no}: unterminated group header"))
             })?;
-            role = match name {
-                "master" => Some(Role::Server),
-                "node" => Some(Role::Agent),
-                _ => None, // k3s_cluster:children etc. are not host lists
-            };
             continue;
         }
-        let Some(role) = role else {
-            continue; // host line outside [master]/[node]: no role to assign
+        let Some(role) = role_of(section, &children) else {
+            continue; // not a cluster member group: no host entry
         };
         let spec = line.split_whitespace().next().unwrap_or_default();
         let address = parse_address(spec)
@@ -70,6 +68,50 @@ pub fn parse_hosts(ini_content: &str) -> Result<Vec<Host>, ConvertError> {
         hosts.push(Host { address, role });
     }
     Ok(hosts)
+}
+
+/// Group names listed under `[k3s_cluster:children]`, or `None` when the
+/// section is absent.
+fn cluster_children(ini_content: &str) -> Option<Vec<String>> {
+    let mut children: Option<Vec<String>> = None;
+    let mut in_children = false;
+    for line in ini_content.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix('[') {
+            in_children = rest.strip_suffix(']').is_some_and(|name| name == "k3s_cluster:children");
+            if in_children {
+                children.get_or_insert_with(Vec::new);
+            }
+            continue;
+        }
+        if in_children
+            && let Some(list) = &mut children
+            && let Some(name) = line.split_whitespace().next()
+        {
+            list.push(name.to_string());
+        }
+    }
+    children
+}
+
+/// Map a section name to a role, gated by `[k3s_cluster:children]`
+/// membership when the list is non-empty.
+fn role_of(section: &str, children: &Option<Vec<String>>) -> Option<Role> {
+    let role = match section {
+        "master" => Role::Server,
+        "node" => Role::Agent,
+        _ => return None, // k3s_cluster:children etc. are not host lists
+    };
+    if let Some(list) = children
+        && !list.is_empty()
+        && !list.iter().any(|name| name == section)
+    {
+        return None; // group exists but is not a cluster child
+    }
+    Some(role)
 }
 
 /// Extract the IP from the documented forms: `192.168.30.38`,
