@@ -31,9 +31,12 @@ for f in "$EPIC_DIR"/*-tasks.yaml; do
   [ "${n_tasks:-0}" -gt 0 ] || err "$f: declares zero tasks"
   [ "$n_tasks" = "$n_verify" ] || err "$f: $n_tasks tasks but only $n_verify verify commands"
 
-  # status must never claim passing pre-verify (failing ledger)
-  if grep -qE '^\s+status: passing' "$f"; then
-    err "$f: task marked passing without recorded verify evidence"
+  # passing tasks must carry recorded verify evidence (failing-ledger rule:
+  # a plan starts failing; flipping to passing is legal only with evidence)
+  n_pass=$(grep -cE '^\s+status: passing' "$f" || true)
+  n_evidence=$(grep -cE '^\s+evidence:' "$f" || true)
+  if [ "${n_pass:-0}" -gt "${n_evidence:-0}" ]; then
+    err "$f: $n_pass passing task(s) but only $n_evidence recorded evidence line(s)"
   fi
 
   # A story with a narrative .md spec is PLANNED: risk + allure required
@@ -41,7 +44,17 @@ for f in "$EPIC_DIR"/*-tasks.yaml; do
   if [ "$spec_count" -gt 0 ]; then
     grep -qE '^\s+risk:' "$f" || err "$f: planned story missing risk"
     grep -q 'severity:' "$f" || err "$f: planned story missing allure.severity"
-    grep -qE '^status: failing' "$f" || err "$f: planned story must start status: failing"
+    # story status: failing (planned/in-progress) or passing (ledger flipped
+    # — only legal once no task is still failing)
+    story_status=$(grep -E '^status:' "$f" | head -1 | awk '{print $2}')
+    case "$story_status" in
+      failing) : ;;
+      passing)
+        n_open=$(grep -cE '^\s+status: failing' "$f" || true)
+        [ "${n_open:-0}" -eq 0 ] || err "$f: story marked passing with $n_open task(s) still failing"
+        ;;
+      *) err "$f: story status must be failing or passing (got: ${story_status:-none})" ;;
+    esac
   fi
 done
 
