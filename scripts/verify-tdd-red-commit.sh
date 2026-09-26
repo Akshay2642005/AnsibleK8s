@@ -38,6 +38,11 @@ run_suite() {
       echo "999" >"$log"; echo "worktree-add failed for $rev" >>"$log"
       return 999
     fi
+    # Reproduce the locally-ignored reference/ oracle: tests read it, it is
+    # version-agnostic (never modified), and it is not carried by git.
+    if [ -d "$root/reference" ]; then
+      cp -R "$root/reference" "$wt/reference" 2>/dev/null || true
+    fi
     (cd "$wt" && bash -c "$TEST_CMD") >"$log" 2>&1 || rc=$?
     git -C "$root" worktree remove --force "$wt" >/dev/null 2>&1 || true
     rm -rf "$wt" 2>/dev/null || true
